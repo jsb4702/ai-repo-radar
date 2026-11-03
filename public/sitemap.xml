@@ -55,6 +55,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://ai-repo-radar-1u7.pages.dev/c/fine-tuning/</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://ai-repo-radar-1u7.pages.dev/c/mlops/</loc>
     <lastmod>2026-11-03</lastmod>
     <changefreq>daily</changefreq>
@@ -62,12 +68,6 @@
   </url>
   <url>
     <loc>https://ai-repo-radar-1u7.pages.dev/c/rag/</loc>
-    <lastmod>2026-11-03</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://ai-repo-radar-1u7.pages.dev/c/fine-tuning/</loc>
     <lastmod>2026-11-03</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
