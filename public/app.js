@@ -1,6 +1,8 @@
 // AI Repo Radar — 클라이언트 렌더 + KO/EN i18n + 필터/검색/정렬 + 상세 시트 + 피드백.
+// 아이콘 = icons.svg 스프라이트(Lucide, ISC) / 카테고리 아이콘 id = cat-<slug> (scripts/build_icons.py)
 
 const WEB3FORMS_KEY = '80d86c46-c769-4d58-ac9d-e046af5c2925'; // web3forms (공개 키 — 발송 전용, 읽기 불가)
+const ICONS = './icons.svg';
 
 const I18N = {
   ko: {
@@ -8,40 +10,44 @@ const I18N = {
     search: '검색 — 이름 · 설명 · 태그',
     sortLabel: '정렬',
     minScore: '최소점수',
-    sort: { prod_score: '실전점수순', star_velocity: '🚀 급상승순(일평균⭐)', stars: '스타순', created_at: '🆕 신규순', last_push: '최근 업데이트순' },
-    meta: (n, c) => `총 ${n}개 repo · 카테고리 ${c}종`,
-    trendAll: '📡 지금 AI 오픈소스는 어디로?',
-    trendCat: (c) => `📡 ${c} — 어디로 가고 있나`,
-    trendCount: (n) => `${n}개`,
-    capNote: (cap, tot) => `상위 ${cap}개 표시 · 전체 ${tot}개 — 검색·카테고리·정렬로 좁혀봐`,
-    empty: '조건에 맞는 repo가 없다 🤷',
-    footer: '데이터: GitHub Search API · 점수는 유지보수·라이선스·인기·문서 휴리스틱 합산',
+    sort: { prod_score: '실전점수순', star_velocity: '급상승순 (일평균 스타)', stars: '스타순', created_at: '신규순', last_push: '최근 업데이트순' },
+    meta: (n, c) => `총 ${tick(n)}개 repo · 카테고리 ${tick(c)}종`,
+    trendAll: '지금 AI 오픈소스는 어디로?',
+    trendCat: (c) => `${c} — 어디로 가고 있나`,
+    trendCount: (n) => `${fmtInt(n)}개`,
+    capNote: (cap, tot) => `상위 ${cap}개 표시 · 전체 ${fmtInt(tot)}개 — 검색·카테고리·정렬로 좁혀봐`,
+    empty: '조건에 맞는 repo가 없다',
+    loadErr: '데이터를 못 불러왔다 — 잠시 뒤 새로고침해 줘',
+    footer: '데이터: GitHub Search API · 점수는 유지보수·라이선스·인기·문서 휴리스틱 합산 · 아이콘 Lucide(ISC)',
     updated: (s) => `갱신 ${s}`,
-    sheet: { category: '카테고리', language: '언어', license: '라이선스', stars: '스타', velocity: '일평균 ⭐', issues: '열린 이슈', created: '생성', push: '최근 푸시', reasons: '실전점수 근거', topics: '토픽', github: 'GitHub에서 열기 ↗', home: '홈페이지 ↗' },
+    sheet: { category: '카테고리', language: '언어', license: '라이선스', stars: '스타', velocity: '일평균 스타', issues: '열린 이슈', created: '생성', push: '최근 푸시', reasons: '실전점수 근거', topics: '토픽', github: 'GitHub에서 열기', home: '홈페이지' },
+    issues: '이슈',
     none: '(설명 없음)',
     toggle: 'EN',
     kofi: 'Ko-fi 후원', kakao: '카카오페이 후원',
-    fb: { open: '피드백', title: '피드백 보내기', sub: '버그·제안·추가했으면 하는 repo, 편하게 남겨줘.', placeholder: '내용을 적어줘…', contact: '회신받을 이메일·연락처 (선택)', send: '보내기', sending: '보내는 중…', ok: '✅ 보냈다. 고마워!', err: '❌ 전송 실패 — 잠시 후 다시', empty: '내용을 입력해줘', noKey: '아직 준비 중 (설정 필요)' },
+    fb: { open: '피드백', title: '피드백 보내기', sub: '버그·제안·추가했으면 하는 repo, 편하게 남겨줘.', placeholder: '내용을 적어줘…', contact: '회신받을 이메일·연락처 (선택)', send: '보내기', sending: '보내는 중…', ok: '보냈다. 고마워!', err: '전송 실패 — 잠시 후 다시', empty: '내용을 입력해줘', noKey: '아직 준비 중 (설정 필요)' },
   },
   en: {
     tagline: 'Daily-trending AI open source, sorted by category and filtered by a <b>production-readiness score</b>.',
     search: 'Search — name · description · tag',
     sortLabel: 'Sort',
     minScore: 'Min score',
-    sort: { prod_score: 'Production score', star_velocity: '🚀 Fastest rising (⭐/day)', stars: 'Stars', created_at: '🆕 Newest', last_push: 'Recently updated' },
-    meta: (n, c) => `${n} repos · ${c} categories`,
-    trendAll: '📡 Where is AI open source heading?',
-    trendCat: (c) => `📡 ${c} — where it's heading`,
-    trendCount: (n) => `${n} repos`,
-    capNote: (cap, tot) => `Showing top ${cap} of ${tot} — narrow with search · category · sort`,
-    empty: 'No repos match 🤷',
-    footer: 'Data: GitHub Search API · score = maintenance + license + popularity + docs heuristic',
+    sort: { prod_score: 'Production score', star_velocity: 'Fastest rising (stars/day)', stars: 'Stars', created_at: 'Newest', last_push: 'Recently updated' },
+    meta: (n, c) => `${tick(n)} repos · ${tick(c)} categories`,
+    trendAll: 'Where is AI open source heading?',
+    trendCat: (c) => `${c} — where it's heading`,
+    trendCount: (n) => `${fmtInt(n)} repos`,
+    capNote: (cap, tot) => `Showing top ${cap} of ${fmtInt(tot)} — narrow with search · category · sort`,
+    empty: 'No repos match',
+    loadErr: "Couldn't load the data — please refresh in a moment",
+    footer: 'Data: GitHub Search API · score = maintenance + license + popularity + docs heuristic · Icons: Lucide (ISC)',
     updated: (s) => `Updated ${s}`,
-    sheet: { category: 'Category', language: 'Language', license: 'License', stars: 'Stars', velocity: '⭐/day', issues: 'Open issues', created: 'Created', push: 'Last push', reasons: 'Score basis', topics: 'Topics', github: 'Open on GitHub ↗', home: 'Homepage ↗' },
+    sheet: { category: 'Category', language: 'Language', license: 'License', stars: 'Stars', velocity: 'Stars/day', issues: 'Open issues', created: 'Created', push: 'Last push', reasons: 'Score basis', topics: 'Topics', github: 'Open on GitHub', home: 'Homepage' },
+    issues: 'issues',
     none: '(no description)',
     toggle: '한국어',
     kofi: 'Support (Ko-fi)', kakao: 'Donate (KakaoPay)',
-    fb: { open: 'Feedback', title: 'Send feedback', sub: 'Bugs, suggestions, repos to add — anything.', placeholder: 'Your message…', contact: 'Your email/contact (optional)', send: 'Send', sending: 'Sending…', ok: '✅ Sent. Thanks!', err: '❌ Failed — try again', empty: 'Please enter a message', noKey: 'Not set up yet' },
+    fb: { open: 'Feedback', title: 'Send feedback', sub: 'Bugs, suggestions, repos to add — anything.', placeholder: 'Your message…', contact: 'Your email/contact (optional)', send: 'Send', sending: 'Sending…', ok: 'Sent. Thanks!', err: 'Failed — try again', empty: 'Please enter a message', noKey: 'Not set up yet' },
   },
 };
 
@@ -66,19 +72,32 @@ function reasonText(r) {
 const state = {
   repos: [], byName: new Map(), trends: null,
   category: 'All', query: '', sort: 'prod_score', minScore: 0,
-  generatedAt: null, lang: 'ko',
+  generatedAt: null, lang: 'ko', loadError: false, ticked: false,
 };
 const el = (id) => document.getElementById(id);
 const T = () => I18N[state.lang];
+const reduceMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---- 작은 도우미 ----
+const icon = (id, cls = '') => `<svg class="ic${cls ? ' ' + cls : ''}" aria-hidden="true"><use href="${ICONS}#${id}"/></svg>`;
+// prerender.py slugify 와 같은 규칙 — 카테고리 아이콘 id 와 /c/<slug>/ 경로가 여기서 맞물린다
+const catSlug = (c) => String(c).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+const catIcon = (c) => (c === 'All' ? icon('i-all') : icon('cat-' + catSlug(c)));
+const fmtInt = (n) => Number(n || 0).toLocaleString(state.lang === 'ko' ? 'ko-KR' : 'en-US');
+// 숫자 세기 대상: 최종값을 바로 써 두고(움직임 꺼짐·JS 실패 대비) 첫 로드 때만 0부터 센다
+const tick = (n) => `<b class="num tick" data-n="${n}">${fmtInt(n)}</b>`;
 
 function detectLang() {
-  const saved = localStorage.getItem('arr_lang');
-  if (saved === 'ko' || saved === 'en') return saved;
+  try {
+    const saved = localStorage.getItem('arr_lang');
+    if (saved === 'ko' || saved === 'en') return saved;
+  } catch (_) {}
   return (navigator.language || '').toLowerCase().startsWith('ko') ? 'ko' : 'en';
 }
 
 function initTheme() {
-  const saved = localStorage.getItem('arr_theme');
+  let saved = null;
+  try { saved = localStorage.getItem('arr_theme'); } catch (_) {}
   const theme = (saved === 'light' || saved === 'dark')
     ? saved
     : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
@@ -86,31 +105,41 @@ function initTheme() {
 }
 function setTheme(theme, persist = true) {
   document.documentElement.dataset.theme = theme;
-  if (persist) localStorage.setItem('arr_theme', theme);
+  if (persist) { try { localStorage.setItem('arr_theme', theme); } catch (_) {} }
   const btn = el('theme-toggle');
-  if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+  if (btn) btn.innerHTML = icon(theme === 'dark' ? 'i-sun' : 'i-moon');
 }
 
 async function load() {
   initTheme();
   state.lang = detectLang();
+  applyI18n();
   try {
-    const res = await fetch('./data/repos.json', { cache: 'no-store' });
+    // no-cache = 매번 서버에 "바뀌었나"만 묻고(ETag), 안 바뀌었으면 304 로 1.4MB 재다운로드를 건너뛴다
+    const res = await fetch('./data/repos.json', { cache: 'no-cache' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     state.repos = data.repos || [];
     state.repos.forEach((r) => state.byName.set(r.name, r));
     state.generatedAt = data.generated_at;
     try {
-      const tr = await fetch('./data/trends.json', { cache: 'no-store' });
+      const tr = await fetch('./data/trends.json', { cache: 'no-cache' });
       if (tr.ok) state.trends = await tr.json();
     } catch (_) {}
     applyI18n();
+    animateTicks(el('meta'));
     buildTabs();
     renderTrend();
     render(true);
     openFromHash();
   } catch (e) {
-    el('meta').textContent = '데이터 로드 실패 — data/repos.json';
+    state.loadError = true;
+    el('grid').innerHTML = '';
+    el('grid').setAttribute('aria-busy', 'false');
+    el('meta').innerHTML = '&nbsp;';
+    el('empty-art').src = './img/error.svg';
+    el('empty-text').textContent = T().loadErr;
+    el('empty').hidden = false;
     console.error(e);
   }
 }
@@ -123,7 +152,7 @@ function applyI18n() {
   el('sort-label').textContent = t.sortLabel;
   el('minscore-label').textContent = t.minScore;
   el('lang-toggle').textContent = t.toggle;
-  el('empty').textContent = t.empty;
+  el('empty-text').textContent = state.loadError ? t.loadErr : t.empty;
   el('kofi-label').textContent = t.kofi;
   el('kakao-label').textContent = t.kakao;
   el('fb-open-label').textContent = t.fb.open;
@@ -132,11 +161,26 @@ function applyI18n() {
   el('fb-msg').placeholder = t.fb.placeholder;
   el('fb-contact').placeholder = t.fb.contact;
   el('fb-send').textContent = t.fb.send;
-  el('meta').textContent = t.meta(state.repos.length, countCategories().length);
+  if (state.repos.length) el('meta').innerHTML = t.meta(state.repos.length, countCategories().length);
   el('footer-data').innerHTML = `${t.footer} · <span id="genat"></span>`;
   if (state.generatedAt) el('genat').textContent = t.updated(new Date(state.generatedAt).toLocaleString(state.lang === 'ko' ? 'ko-KR' : 'en-US'));
   // 정렬 옵션 텍스트
   [...el('sort').options].forEach((o) => { o.textContent = t.sort[o.value] || o.value; });
+}
+
+// Magic UI 'number ticker' 발상 — 첫 로드 때 한 번만 0 → 최종값
+function animateTicks(root) {
+  if (state.ticked || reduceMotion()) { state.ticked = true; return; }
+  state.ticked = true;
+  const nodes = [...root.querySelectorAll('.tick')];
+  const dur = 900, t0 = performance.now();
+  const ease = (x) => 1 - Math.pow(1 - x, 3);
+  const step = (now) => {
+    const p = Math.min(1, (now - t0) / dur);
+    nodes.forEach((n) => { n.textContent = fmtInt(Math.round(+n.dataset.n * ease(p))); });
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
 }
 
 function countCategories() {
@@ -148,7 +192,7 @@ function countCategories() {
 function buildTabs() {
   const tabs = [['All', state.repos.length], ...countCategories()];
   el('tabs').innerHTML = tabs
-    .map(([c, n]) => `<span class="tab ${c === state.category ? 'active' : ''}" data-cat="${c}">${c}<span class="n">${n}</span></span>`)
+    .map(([c, n]) => `<span class="tab ${c === state.category ? 'active' : ''}" data-cat="${escapeAttr(c)}">${catIcon(c)}${escapeHtml(c)}<span class="n">${fmtInt(n)}</span></span>`)
     .join('');
   el('tabs').querySelectorAll('.tab').forEach((t) =>
     t.addEventListener('click', () => { state.category = t.dataset.cat; buildTabs(); renderTrend(); render(true); }));
@@ -184,7 +228,8 @@ function filtered() {
 function card(r, i, animate) {
   const sc = scoreClass(r.prod_score);
   const reasons = (r.prod_reasons || []).slice(0, 3).map(reasonText).join(' · ');
-  const flags = (r.star_velocity >= 100 ? `<span class="flag" title="${fmt(r.star_velocity)}⭐/day">🚀</span>` : '') + (r.is_new ? `<span class="flag">🆕</span>` : '');
+  const flags = (r.star_velocity >= 100 ? `<span class="flag hot" title="${fmt(r.star_velocity)} stars/day">${icon('i-rocket')}</span>` : '')
+    + (r.is_new ? `<span class="flag new" title="new">${icon('i-sparkles')}</span>` : '');
   const delay = animate ? Math.min(i, 12) * 28 : 0;
   return `
     <article class="${animate ? 'card enter' : 'card'}" ${animate ? `style="animation-delay:${delay}ms"` : ''} data-name="${escapeAttr(r.name)}">
@@ -194,19 +239,21 @@ function card(r, i, animate) {
       </div>
       <div class="card-desc">${escapeHtml(summaryOf(r))}</div>
       <div class="badges">
-        <span class="badge cat">${r.category}</span>
+        <span class="badge cat">${catIcon(r.category)}${escapeHtml(r.category)}</span>
         ${r.language ? `<span class="badge">${escapeHtml(r.language)}</span>` : ''}
         ${r.license ? `<span class="badge">${escapeHtml(r.license)}</span>` : ''}
       </div>
       <div class="reasons">${escapeHtml(reasons)}</div>
-      <div class="card-foot"><span>★ ${fmt(r.stars)}</span><span>${r.last_push || '?'}</span><span>${state.lang === 'ko' ? '이슈' : 'issues'} ${fmt(r.open_issues)}</span></div>
+      <div class="card-foot"><span>${icon('i-star')}${fmt(r.stars)}</span><span>${icon('i-clock')}${r.last_push || '?'}</span><span>${icon('i-issue')}${T().issues} ${fmt(r.open_issues)}</span></div>
     </article>`;
 }
 
 const RENDER_CAP = 120;
 function render(animate) {
   const list = filtered();
-  el('grid').innerHTML = list.slice(0, RENDER_CAP).map((r, i) => card(r, i, animate)).join('');
+  const grid = el('grid');
+  grid.innerHTML = list.slice(0, RENDER_CAP).map((r, i) => card(r, i, animate)).join('');
+  grid.setAttribute('aria-busy', 'false');
   el('empty').hidden = list.length > 0;
   const note = el('cap-note');
   if (list.length > RENDER_CAP) { note.hidden = false; note.textContent = T().capNote(RENDER_CAP, list.length); }
@@ -240,20 +287,20 @@ function openSheet(name) {
   const t = T(), sc = scoreClass(r.prod_score);
   const topics = (r.topics || []).map((x) => `<span class="chip">${escapeHtml(x)}</span>`).join('');
   const reasons = (r.prod_reasons || []).map((x) => `<li>${escapeHtml(reasonText(x))}</li>`).join('');
-  const home = r.homepage ? `<a class="btn btn-2" href="${escapeAttr(r.homepage)}" target="_blank" rel="noopener">${t.sheet.home}</a>` : '';
+  const home = r.homepage ? `<a class="btn btn-2" href="${escapeAttr(r.homepage)}" target="_blank" rel="noopener">${t.sheet.home}${icon('i-external')}</a>` : '';
   const ko = state.lang === 'ko' ? (r.summary_ko || r.description) : (r.description || r.summary_ko);
   const second = state.lang === 'ko' ? (r.summary_ko && r.description ? r.description : '') : '';
   el('sheet-body').innerHTML = `
     <div class="sheet-head"><h2><a href="${escapeAttr(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.name)}</a></h2><div class="score ${sc} big">${r.prod_score}</div></div>
     <p class="sheet-desc">${escapeHtml(ko || t.none)}</p>
     ${second ? `<p class="sheet-en">${escapeHtml(second)}</p>` : ''}
-    <div class="sheet-actions"><a class="btn btn-1" href="${escapeAttr(r.url)}" target="_blank" rel="noopener">${t.sheet.github}</a>${home}</div>
+    <div class="sheet-actions"><a class="btn btn-1" href="${escapeAttr(r.url)}" target="_blank" rel="noopener">${t.sheet.github}${icon('i-external')}</a>${home}</div>
     <div class="sheet-stats">
-      <div><span>${t.sheet.category}</span><b>${r.category}</b></div>
+      <div><span>${t.sheet.category}</span><b>${catIcon(r.category)}${escapeHtml(r.category)}</b></div>
       <div><span>${t.sheet.language}</span><b>${escapeHtml(r.language || '—')}</b></div>
       <div><span>${t.sheet.license}</span><b>${escapeHtml(r.license || '—')}</b></div>
       <div><span>${t.sheet.stars}</span><b>${fmt(r.stars)}</b></div>
-      <div><span>${t.sheet.velocity}</span><b>${fmt(r.star_velocity || 0)}${r.star_velocity >= 100 ? ' 🚀' : ''}</b></div>
+      <div><span>${t.sheet.velocity}</span><b>${r.star_velocity >= 100 ? icon('i-rocket') : ''}${fmt(r.star_velocity || 0)}</b></div>
       <div><span>${t.sheet.issues}</span><b>${fmt(r.open_issues)}</b></div>
       <div><span>${t.sheet.created}</span><b>${r.created_at || '—'}</b></div>
       <div><span>${t.sheet.push}</span><b>${r.last_push || '—'}</b></div>
@@ -328,8 +375,19 @@ const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', 
 const escapeAttr = escapeHtml;
 
 function setLang(lang) {
-  state.lang = lang; localStorage.setItem('arr_lang', lang);
+  state.lang = lang;
+  try { localStorage.setItem('arr_lang', lang); } catch (_) {}
   applyI18n(); buildTabs(); renderTrend(); render(false);
+}
+
+// 카드 테두리 빛: 마우스 위치를 카드 안 좌표(--mx/--my)로 넘긴다. 마우스 있는 기기만.
+if (window.matchMedia && window.matchMedia('(hover: hover)').matches) {
+  el('grid').addEventListener('pointermove', (e) => {
+    const c = e.target.closest('.card'); if (!c || c.classList.contains('skel')) return;
+    const b = c.getBoundingClientRect();
+    c.style.setProperty('--mx', `${e.clientX - b.left}px`);
+    c.style.setProperty('--my', `${e.clientY - b.top}px`);
+  });
 }
 
 let searchTimer;
@@ -347,13 +405,13 @@ el('search').addEventListener('keydown', (e) => {
 });
 el('sort').addEventListener('change', (e) => { state.sort = e.target.value; render(true); });
 el('minScore').addEventListener('input', (e) => { state.minScore = +e.target.value; el('minOut').textContent = e.target.value; render(false); });
-el('grid').addEventListener('click', (e) => { const c = e.target.closest('.card'); if (c) openSheet(c.dataset.name); });
-el('sheet').addEventListener('click', (e) => { if (e.target.dataset.close !== undefined) closeSheet(); });
+el('grid').addEventListener('click', (e) => { const c = e.target.closest('.card'); if (c && !c.classList.contains('skel')) openSheet(c.dataset.name); });
+el('sheet').addEventListener('click', (e) => { if (e.target.closest('[data-close]')) closeSheet(); });
 el('lang-toggle').addEventListener('click', () => setLang(state.lang === 'ko' ? 'en' : 'ko'));
 el('theme-toggle').addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
 el('fb-open').addEventListener('click', openFb);
 el('fb-send').addEventListener('click', sendFeedback);
-el('fb').addEventListener('click', (e) => { if (e.target.dataset.fbclose !== undefined) closeFb(); });
+el('fb').addEventListener('click', (e) => { if (e.target.closest('[data-fbclose]')) closeFb(); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeSheet(); closeFb(); } });
 
 load();

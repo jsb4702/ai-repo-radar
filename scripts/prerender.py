@@ -55,6 +55,13 @@ KO_LABEL = {
     "Other": "기타",
 }
 
+# 글꼴 — index.html <head> 와 같은 값을 유지할 것(한글 Pretendard OFL + 영문 제목·숫자 Fontshare)
+FONT_LINKS = """  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preconnect" href="https://api.fontshare.com" />
+  <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@500,700&display=swap" media="print" onload="this.media='all'" />"""
+
 NAV_START = "<!-- PRERENDER:CATNAV:START -->"
 NAV_END = "<!-- PRERENDER:CATNAV:END -->"
 
@@ -63,10 +70,12 @@ def slugify(cat: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", cat.lower()).strip("-")
 
 
-def css_version() -> str:
-    """styles.css 내용 해시 — 캐시 무효화용.
-    내용이 바뀔 때만 값이 변한다(날짜 기반이면 매일 무의미하게 캐시가 깨진다)."""
-    data = (PUBLIC / "styles.css").read_bytes()
+def css_version(name: str = "styles.css") -> str:
+    """정적 파일 내용 해시 — 캐시 무효화용(styles.css, app.js).
+    내용이 바뀔 때만 값이 변한다(날짜 기반이면 매일 무의미하게 캐시가 깨진다).
+    app.js 에도 붙이는 이유: index.html 마크업과 app.js 가 함께 바뀌면(2026-11-27 디자인 개편)
+    옛 app.js 캐시가 새 마크업을 만나 깨질 수 있다."""
+    data = (PUBLIC / name).read_bytes()
     return hashlib.md5(data).hexdigest()[:8]
 
 
@@ -82,23 +91,33 @@ def fmt(n) -> str:
         return "?"
 
 
+def icon(prefix: str, sid: str) -> str:
+    """icons.svg 스프라이트 참조 — app.js icon() 과 같은 마크업."""
+    return f'<svg class="ic" aria-hidden="true"><use href="{prefix}icons.svg#{sid}"/></svg>'
+
+
+def cat_icon(prefix: str, cat: str) -> str:
+    """카테고리 아이콘 id = cat-<slug> (scripts/build_icons.py). 매핑에 없으면 자리만 빈다."""
+    return icon(prefix, "cat-" + slugify(cat))
+
+
 def score_class(s) -> str:
     """app.js:157 scoreClass와 동일 임계 — 색상 일관성 유지."""
     s = s or 0
     return "good" if s >= 70 else "mid" if s >= 40 else "bad"
 
 
-def card_html(r: dict) -> str:
+def card_html(r: dict, prefix: str = "../../") -> str:
     """app.js:184 card()와 같은 클래스 구조 — styles.css 재사용.
     단, 정적 페이지에서는 <article> 대신 <a>로 감싸 GitHub으로 직접 링크한다
     (JS 없이도 동작 + 크롤러가 따라갈 아웃링크 확보)."""
     reasons = " · ".join((r.get("prod_reasons") or [])[:3])
     flags = ""
     if (r.get("star_velocity") or 0) >= 100:
-        flags += '<span class="flag">🚀</span>'
+        flags += f'<span class="flag hot">{icon(prefix, "i-rocket")}</span>'
     if r.get("is_new"):
-        flags += '<span class="flag">🆕</span>'
-    badges = f'<span class="badge cat">{e(r.get("category"))}</span>'
+        flags += f'<span class="flag new">{icon(prefix, "i-sparkles")}</span>'
+    badges = f'<span class="badge cat">{cat_icon(prefix, r.get("category") or "")}{e(r.get("category"))}</span>'
     if r.get("language"):
         badges += f'<span class="badge">{e(r["language"])}</span>'
     if r.get("license"):
@@ -111,7 +130,7 @@ def card_html(r: dict) -> str:
         <div class="card-desc">{e(r.get('summary_ko') or r.get('description'))}</div>
         <div class="badges">{badges}</div>
         <div class="reasons">{e(reasons)}</div>
-        <div class="card-foot"><span>★ {fmt(r.get('stars'))}</span><span>{e(r.get('last_push') or '?')}</span><span>이슈 {fmt(r.get('open_issues'))}</span></div>
+        <div class="card-foot"><span>{icon(prefix, "i-star")}{fmt(r.get('stars'))}</span><span>{icon(prefix, "i-clock")}{e(r.get('last_push') or '?')}</span><span>{icon(prefix, "i-issue")}이슈 {fmt(r.get('open_issues'))}</span></div>
       </a>"""
 
 
@@ -120,9 +139,9 @@ def cat_nav(cats: list, current: str | None, prefix: str) -> str:
     out = []
     for c in cats:
         if c == current:
-            out.append(f'<span class="tab active">{e(c)}</span>')
+            out.append(f'<span class="tab active">{cat_icon(prefix, c)}{e(c)}</span>')
         else:
-            out.append(f'<a class="tab" href="{prefix}c/{slugify(c)}/">{e(c)}</a>')
+            out.append(f'<a class="tab" href="{prefix}c/{slugify(c)}/">{cat_icon(prefix, c)}{e(c)}</a>')
     return '<div class="tabs">' + "".join(out) + "</div>"
 
 
@@ -165,6 +184,8 @@ def build_page(cat: str, repos: list, trend: dict, cats: list, gen_date: str, cs
   <meta property="og:locale" content="ko_KR" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="{BASE}/og.png" />
+  <meta name="theme-color" content="#047857" />
+{FONT_LINKS}
   <link rel="stylesheet" href="../../styles.css?v={cssv}" />
 </head>
 <body>
@@ -179,7 +200,7 @@ def build_page(cat: str, repos: list, trend: dict, cats: list, gen_date: str, cs
 
   <main class="wrap">
     <section class="trend">
-      <div class="trend-head"><span class="trend-eyebrow">📡 {e(cat)} 지금 흐름</span></div>
+      <div class="trend-head"><span class="trend-eyebrow">{icon("../../", "i-radar")}{e(cat)} 지금 흐름</span></div>
       <p class="trend-summary">{e(summary)}</p>
       <div class="trend-keywords">{kw_html}</div>
     </section>
@@ -233,6 +254,11 @@ def inject_nav(cats: list, cssv: str) -> bool:
         r'(<link rel="stylesheet" href="\./styles\.css)(\?v=[a-f0-9]+)?(")',
         rf"\1?v={cssv}\3",
         orig,
+    )
+    src = re.sub(
+        r'(<script src="\./app\.js)(\?v=[a-f0-9]+)?(")',
+        rf"\1?v={css_version('app.js')}\3",
+        src,
     )
     block = (
         f'{NAV_START}\n    <nav class="catnav">\n      <p class="meta">카테고리별 보기</p>\n      '
