@@ -62,6 +62,11 @@ FONT_LINKS = """  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossor
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" media="print" onload="this.media='all'" />
   <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@500,700&display=swap" media="print" onload="this.media='all'" />"""
 
+# 테마 — 칠하기 전에 data-theme 를 붙인다. /c/ 페이지엔 app.js 가 없어서 이게 없으면
+# OS 가 어두운 모드여도 항상 밝은 화면이 된다. index.html <head> 와 app.js initTheme() 와
+# 같은 규칙(저장값 arr_theme 우선, 없으면 OS 설정)을 유지할 것.
+THEME_BOOT = """  <script>(function(){var t;try{t=localStorage.getItem('arr_theme')}catch(e){}if(t!=='light'&&t!=='dark'){t=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.dataset.theme=t})()</script>"""
+
 NAV_START = "<!-- PRERENDER:CATNAV:START -->"
 NAV_END = "<!-- PRERENDER:CATNAV:END -->"
 
@@ -185,6 +190,7 @@ def build_page(cat: str, repos: list, trend: dict, cats: list, gen_date: str, cs
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="{BASE}/og.png" />
   <meta name="theme-color" content="#047857" />
+{THEME_BOOT}
 {FONT_LINKS}
   <link rel="stylesheet" href="../../styles.css?v={cssv}" />
 </head>

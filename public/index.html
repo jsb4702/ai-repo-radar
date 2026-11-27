@@ -25,6 +25,9 @@
   <meta name="twitter:description" content="매일 GitHub AI 오픈소스를 분류·실전점수·트렌드로. 5,900+ repos · 한/영." />
   <meta name="twitter:image" content="https://ai-repo-radar-1u7.pages.dev/og.png" />
 
+  <!-- 테마: 칠하기 전에 data-theme 지정(밝은 화면 깜빡임 방지). scripts/prerender.py THEME_BOOT·app.js initTheme() 와 같은 규칙 -->
+  <script>(function(){var t;try{t=localStorage.getItem('arr_theme')}catch(e){}if(t!=='light'&&t!=='dark'){t=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.dataset.theme=t})()</script>
+
   <!-- 글꼴: 한글 Pretendard(OFL, jsDelivr) + 영문 제목·숫자 Fontshare. 첫 화면을 막지 않게 비동기 로드 -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="preconnect" href="https://api.fontshare.com" />
